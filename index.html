@@ -31,7 +31,7 @@ try {
   #pad{width:100%;max-width:480px;display:flex;gap:10px;justify-content:center;padding:0 16px 8px}
   #pad button{flex:1;max-width:120px;font-size:22px}
   #runs{width:100%;max-width:480px;text-align:center;color:#9beaff;font-size:12px;padding:0 16px 6px;min-height:16px}
-  footer{width:100%;max-width:480px;text-align:center;color:#7fa8b8;font-size:12px;padding:4px 16px calc(12px + env(safe-area-inset-bottom))}
+  footer{width:100%;max-width:480px;text-align:center;color:#7fa8b8;font-size:12px;padding:4px 16px calc(12px + env(safe-area-inset-bottom));padding-bottom:34px;padding-bottom:max(34px, calc(12px + env(safe-area-inset-bottom)))}
   @media (max-width:380px){ #pad button{font-size:20px} h1{font-size:19px} }
   /* --- Desktop (Tier 5 desktop-readiness): everything in this block only
      applies at 1024px and up. Phone CSS above is untouched. Arcade pattern:
