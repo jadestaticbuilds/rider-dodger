@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <script>
 /* ?view=desktop preview: force desktop theme on narrow screens */
 try {
@@ -14,28 +13,26 @@ try {
 <title>Rider Dodger · A Jade Static Builds collab</title>
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#04070d;color:#e8fbff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+  html,body{margin:0;height:100%;background:#030805;color:#eafff5;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
   body{display:flex;flex-direction:column;align-items:center}
   header{width:100%;max-width:480px;padding:14px 16px 6px;text-align:center}
-  h1{margin:0;font-size:22px;letter-spacing:2px;color:#00f0ff;text-shadow:0 0 12px #00f0ff}
-  p.tag{margin:4px 0 0;color:#9beaff;font-size:13px}
+  h1{margin:0;font-size:22px;letter-spacing:2px;color:#2ee6a8;text-shadow:0 0 12px rgba(46,230,168,.8)}
+  p.tag{margin:4px 0 0;color:#8fd8bb;font-size:13px}
+  #pilot{color:#ff2e88;font-weight:700;letter-spacing:1px;margin:2px 0;font-size:13px}
   #hud{width:100%;max-width:480px;display:flex;justify-content:space-between;gap:8px;padding:8px 16px;font-size:14px;font-weight:700}
   #hud span{white-space:nowrap}
-  #msg{width:100%;max-width:480px;min-height:22px;text-align:center;color:#ffe259;font-size:14px;padding:0 16px}
+  #msg{width:100%;max-width:480px;min-height:22px;text-align:center;color:#ffd76a;font-size:14px;padding:0 16px}
   #stage{position:relative;width:min(92vw,440px,calc((100dvh - 310px) * 400 / 520));aspect-ratio:400/520}
-  canvas{width:100%;height:100%;display:block;background:#071018;border:2px solid #00f0ff;border-radius:14px;touch-action:none;box-shadow:0 0 24px rgba(0,240,255,.25)}
+  canvas{width:100%;height:100%;display:block;background:#071510;border:2px solid #14532d;border-radius:14px;touch-action:none;box-shadow:0 0 24px rgba(46,230,168,.22)}
   #controls{width:100%;max-width:480px;display:flex;gap:8px;justify-content:center;padding:10px 16px;flex-wrap:wrap}
-  button{background:#0a1a26;color:#e8fbff;border:1px solid #00f0ff;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;min-height:48px;cursor:pointer}
-  button:active{background:#123a4a}
-  button.primary{background:#00f0ff;color:#04070d}
+  button{background:#0a1f16;color:#eafff5;border:1px solid #2ee6a8;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;min-height:48px;cursor:pointer}
+  button:active{background:#123a26}
+  button.primary{background:#2ee6a8;color:#03130b}
   #pad{width:100%;max-width:480px;display:flex;gap:10px;justify-content:center;padding:0 16px 8px}
   #pad button{flex:1;max-width:120px;font-size:22px}
-  #runs{width:100%;max-width:480px;text-align:center;color:#9beaff;font-size:12px;padding:0 16px 6px;min-height:16px}
-  footer{width:100%;max-width:480px;text-align:center;color:#7fa8b8;font-size:12px;padding:4px 16px calc(12px + env(safe-area-inset-bottom));padding-bottom:34px;padding-bottom:max(34px, calc(12px + env(safe-area-inset-bottom)))}
+  #runs{width:100%;max-width:480px;text-align:center;color:#8fd8bb;font-size:12px;padding:0 16px 6px;min-height:16px}
+  footer{width:100%;max-width:480px;text-align:center;color:#5f8a76;font-size:12px;padding:4px 16px calc(12px + env(safe-area-inset-bottom));padding-bottom:34px;padding-bottom:max(34px, calc(12px + env(safe-area-inset-bottom)))}
   @media (max-width:380px){ #pad button{font-size:20px} h1{font-size:19px} }
-  /* --- Desktop (Tier 5 desktop-readiness): everything in this block only
-     applies at 1024px and up. Phone CSS above is untouched. Arcade pattern:
-     centered, larger play area, HUD scaled sensibly. */
   @media (min-width:1024px){
     header,#hud,#msg,#controls,#pad,#runs,footer{max-width:680px}
     header{padding:18px 16px 8px}
@@ -55,6 +52,7 @@ try {
   }
 </style>
   <script data-goatcounter="https://georgestriderbuilds.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <style>
 /* prevent text selection popup on mobile tap */
 html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -72,6 +70,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   <button class="primary" id="startBtn">Start ride</button>
   <button id="pauseBtn">Pause</button>
   <button id="soundBtn">Sound: On</button>
+  <button id="calmBtn">Motion: Full</button>
 </div>
 <div id="pad">
   <button id="leftBtn" aria-label="Move left">◀</button>
@@ -83,34 +82,72 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
 <script>
 (function(){
   "use strict";
+  var W = 400, H = 520, HY = 295, ZC = 0.88;
   var canvas = document.getElementById("game");
   var ctx = canvas.getContext("2d");
-  var W = 400, H = 520, LANES = [80, 200, 320], GROUND_Y = 452;
-  // DPR-sharp rendering: the shrink-to-fit CSS can display the canvas
-  // larger than its 400x520 backing store, which blurs it on high-DPI
-  // phones. Scale the backing store by devicePixelRatio (capped at 3)
-  // and keep drawing in logical 400x520 coordinates.
   function fitDpr(){
-    var dpr = Math.min(3, window.devicePixelRatio || 1);
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
+    var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   fitDpr();
   window.addEventListener("resize", fitDpr);
-  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function load(key, fallback){
-    try { var v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
-    catch (e) { return fallback; }
+  var reduced = false;
+  try { reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  /* Wet Jade backdrop plate: generated storm skyline. The game falls
+     back to a painted gradient sky until (or unless) it loads. */
+  var skyImg = new Image(), skyReady = false;
+  skyImg.onload = function(){ skyReady = true; };
+  skyImg.src = "storm-plate.webp";
+  /* Full-scene environment plate (v3): the AI city continues down
+     both sides of the road, so the whole canvas is one world and
+     only the road itself is game surface. Falls back to the sky
+     plate plus painted ground until (or unless) it loads. */
+  var envImg = new Image(), envReady = false;
+  envImg.onload = function(){ envReady = true; };
+  envImg.src = "narrow-plate.webp";
+  /* Photoreal bike sprite (v6): a generated rear-view adventure bike
+     and rider, cut out and night-graded at build time. The drawn
+     vector bike below remains the fallback until (or unless) it loads. */
+  var bikeImg = new Image(), bikeReady = false;
+  bikeImg.onload = function(){ bikeReady = true; };
+  bikeImg.src = "bike-sprite.webp";
+  /* Wet asphalt texture (v8): the road surface itself, perspective-
+     mapped onto the plate's street and scrolled at exactly the
+     obstacles' approach speed, so the ground moves under the rider.
+     The texture is stacked with its own mirror image, which makes
+     the scroll wrap seamless. Flow cues alone remain the fallback. */
+  var texImg = new Image(), texReady = false, texCanvas = null;
+  texImg.onload = function(){
+    try {
+      texCanvas = document.createElement("canvas");
+      texCanvas.width = 512; texCanvas.height = 1024;
+      var tc = texCanvas.getContext("2d");
+      tc.drawImage(texImg, 0, 0, 512, 512);
+      tc.save(); tc.translate(0, 1024); tc.scale(1, -1);
+      tc.drawImage(texImg, 0, 0, 512, 512); tc.restore();
+      texReady = true;
+    } catch (e) { texReady = false; }
+  };
+  texImg.src = "asphalt-tex.webp";
+  function load(k, d){
+    try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; }
   }
-  function save(key, value){ try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  /* Live storage keys (rd-): George's saved best, runs, sound and
+     motion choices from the previous live game carry over. */
   var best = load("rd-best", 0);
   var runs = load("rd-runs", []);
   var soundOn = load("rd-sound", true);
+  var calm = load("rd-calm", true);
   var state = "ready"; // ready | playing | paused | over
-  var lane = 1, riderY = 0, vy = 0, jumping = false;
+  var lane = 1, riderY = 0, vy = 0, jumping = false, riderX = 200;
   var distance = 0, speed = 2.0, spawnTimer = 0, tick = 0, elapsed = 0;
   var hearts = 3, invuln = 0, obstacles = [], particles = [], splash = 0;
+  var flash = 0, nextFlash = 500 + Math.random() * 500;
+  /* v6 speed cues for riding on the plate's own street: warm light
+     streaks flowing down the lane dividers, plus rain ripples. */
+  var streakZ = [0.05, 0.28, 0.52, 0.76, 0.96], ripples = [], rippleT = 0;
   var scoreEl = document.getElementById("score");
   var bestEl = document.getElementById("best");
   var heartsEl = document.getElementById("hearts");
@@ -119,6 +156,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   var soundBtn = document.getElementById("soundBtn");
   var startBtn = document.getElementById("startBtn");
   var pauseBtn = document.getElementById("pauseBtn");
+  var calmBtn = document.getElementById("calmBtn");
 
   function renderRuns(){
     if (!runs.length) { runsEl.textContent = ""; return; }
@@ -143,6 +181,25 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
       o.start(); o.stop(ac.currentTime + 0.08);
     } catch (e) {}
   }
+  /* A soft noise splash under the hit blip, so a hit feels wet
+     instead of purely electronic. */
+  function noiseSplash(){
+    if (!soundOn) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var ac = blip.ac || (blip.ac = new AC());
+      var len = Math.floor(ac.sampleRate * 0.18);
+      var buf = ac.createBuffer(1, len, ac.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      var src = ac.createBufferSource(); src.buffer = buf;
+      var f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900;
+      var g = ac.createGain(); g.gain.value = 0.12;
+      src.connect(f); f.connect(g); g.connect(ac.destination);
+      src.start();
+    } catch (e) {}
+  }
   function burst(x, y, color, n){
     if (reduced) n = Math.min(n, 4);
     for (var i = 0; i < n; i++){
@@ -150,7 +207,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     }
   }
   function reset(){
-    lane = 1; riderY = 0; vy = 0; jumping = false;
+    lane = 1; riderY = 0; vy = 0; jumping = false; riderX = 200;
     distance = 0; speed = 2.0; spawnTimer = 40; tick = 0; elapsed = 0;
     hearts = 3; invuln = 0; obstacles = []; particles = []; splash = 0;
     startBtn.textContent = "Start ride"; startBtn.style.display = "";
@@ -158,9 +215,6 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   }
   function start(){
     reset(); state = "playing";
-    /* Restart is hidden while riding, so a thumb reaching for the
-       left arrow can never accidentally restart the run. It only
-       appears when the run is over or paused. */
     startBtn.textContent = "Restart"; startBtn.style.display = "none";
     msgEl.textContent = "Ride! Dodge drops, jump puddles and gusts.";
     blip(440);
@@ -171,7 +225,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     runs.unshift(Math.floor(distance)); runs = runs.slice(0, 5); save("rd-runs", runs);
     renderRuns();
     msgEl.textContent = "Soaked! " + Math.floor(distance) + "m. Best: " + best + "m. Tap Restart for one more run.";
-    burst(LANES[lane], GROUND_Y - riderY - 20, "#00f0ff", 24);
+    burst(riderX, 450, "#2ee6a8", 24);
     jsbFunRate("rider-dodger", msgEl);
   }
   function pauseGame(){
@@ -185,7 +239,6 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     state = "playing"; pauseBtn.textContent = "Pause"; startBtn.style.display = "none";
     msgEl.textContent = "Ride! Dodge drops, jump puddles and gusts.";
   }
-  // A hidden tab pauses the run instead of ending it; tap the road to resume.
   document.addEventListener("visibilitychange", function(){
     if (document.hidden) pauseGame();
   });
@@ -195,7 +248,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     if (state !== "playing" || jumping) return;
     jumping = true; vy = -11; blip(520);
   }
-  // Obstacle types, by distance band. Pressure ramps by combination, not speed alone.
+  // Obstacle types, by distance band (unchanged from the live game).
   function pickType(){
     if (distance < 100) return Math.random() < 0.7 ? "drop" : "puddle";
     if (distance < 300) { var r = Math.random(); return r < 0.45 ? "drop" : (r < 0.8 ? "puddle" : "gust"); }
@@ -204,25 +257,25 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   function spawn(){
     var type = pickType();
     var l = Math.floor(Math.random() * 3);
-    // Avoid an impossible wall: never fill all three lanes at the same row.
-    var sameRow = obstacles.filter(function(o){ return Math.abs(o.y + 20) < 30; });
-    if (sameRow.length >= 2) return;
-    obstacles.push({type:type, lane:l, y:-20, dir: Math.random() < 0.5 ? -1 : 1, passed:false});
+    // Avoid an impossible wall: never fill all three lanes near spawn.
+    var near = obstacles.filter(function(o){ return o.z < 0.12; });
+    if (near.length >= 2) return;
+    obstacles.push({type:type, lane:l, z:0, dir: Math.random() < 0.5 ? -1 : 1, passed:false});
   }
-  function hit(ob){
+  function hit(){
     if (invuln > 0) return;
     hearts--; invuln = 60; splash = 14;
-    burst(LANES[lane], GROUND_Y - riderY - 20, "#00f0ff", 18);
-    blip(160);
+    burst(riderX, 440, "#2ee6a8", 18);
+    blip(160); noiseSplash();
     msgEl.textContent = hearts > 0 ? "Splashed! " + hearts + " dry left. Keep going." : "Soaked!";
     if (hearts <= 0) gameOver();
   }
-  /* Delta-time movement: the old loop ran one step per screen refresh,
-     so on a 120Hz phone the game ran about twice as fast as on a 60Hz
-     screen. Every movement is now scaled by real elapsed time, so the
-     game runs at the same speed on 60Hz and 120Hz screens, with the
-     frame gap clamped so a hiccup cannot teleport the rider. Base speed
-     is also eased slightly, the same way Breakout's was. */
+  /* Perspective helpers: z runs 0 (horizon) to 1 (at the rider).
+     The power curve bunches depth near the horizon, like a real road. */
+  function persp(z){ return Math.pow(z, 1.75); }
+  function roadY(z){ return HY + (H - HY) * persp(z); }
+  function roadHalf(z){ return 5 + 190 * persp(z); }
+  function laneX(l, z){ return 200 + (l - 1) * roadHalf(z) * 0.64; }
   var lastTs = 0, STEP_MS = 1000 / 60;
   function step(ts){
     var dt = 1;
@@ -237,46 +290,63 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     }
     if (state === "playing"){
       tick += dt; elapsed += dt / 60; distance += speed * 0.06 * dt;
-      /* Difficulty ramp, Veil Skiff style: elapsed time drives obstacle
-         speed and spawn density. Gentle for the first minute, clearly
-         harder by minute two. Endpoints match the old distance-based
-         ramp, so the feel George knows is preserved. */
-      var ramp = Math.min(1, elapsed / 120);
-      speed = 2.0 + ramp * 2.8;
+      /* Difficulty ramp, steepened for the rebuild (team overhaul
+         Wave 1): full pressure at about 90 seconds instead of the
+         live game's 120, and a higher top speed. */
+      var ramp = Math.min(1, elapsed / 90);
+      speed = 2.0 + ramp * 3.2;
       spawnTimer -= dt;
-      if (spawnTimer <= 0){ spawn(); spawnTimer = 70 - Math.floor(ramp * 42); }
+      if (spawnTimer <= 0){ spawn(); spawnTimer = 70 - Math.floor(ramp * 44); }
       if (jumping){
         riderY += -vy * dt; vy += 0.7 * dt;
-        // vy starts negative (up); riderY grows while rising, then falls back.
         if (riderY <= 0){ riderY = 0; jumping = false; vy = 0; }
       }
       if (invuln > 0) invuln -= dt;
       if (splash > 0) splash -= dt;
+      /* The bike eases toward its lane instead of teleporting, and
+         leans into the change (Sasha's feel pass). */
+      var tx = laneX(lane, 1);
+      riderX += (tx - riderX) * Math.min(1, 0.42 * dt);
+      /* Tire spray while grounded. */
+      if (!jumping && !reduced && !calm && Math.random() < 0.35){
+        particles.push({x: riderX + (Math.random()-0.5)*10, y: 486, vx:(Math.random()-0.5)*1.6, vy: 1 + Math.random()*2, life: 14, color: "#bff5dd"});
+      }
       for (var i = obstacles.length - 1; i >= 0; i--){
         var ob = obstacles[i];
-        ob.y += speed * dt;
-        if (ob.type === "gust"){ ob.laneX = LANES[ob.lane] + Math.sin(tick / 12) * 18; }
-        if (ob.y > H + 30){ obstacles.splice(i, 1); continue; }
-        // Collision zone is the rider row.
-        if (Math.abs(ob.y - (GROUND_Y - 24)) < 26){
-          var x = ob.type === "gust" && ob.laneX !== undefined ? ob.laneX : LANES[ob.lane];
-          var sameLane = Math.abs(x - LANES[lane]) < 42;
-          if (sameLane && !ob.passed){
+        var prevZ = ob.z;
+        ob.z += speed * 0.0036 * dt;
+        if (ob.z > 1.12){ obstacles.splice(i, 1); continue; }
+        /* Collision plane: the moment the obstacle reaches the rider. */
+        if (!ob.passed && prevZ < ZC && ob.z >= ZC){
+          ob.passed = true;
+          if (ob.lane === lane){
             if (ob.type === "drop"){
               // Drops must be dodged by lane change; jumping into one still counts.
-              hit(ob); ob.passed = true;
+              hit();
+            } else if (ob.type === "puddle"){
+              if (!jumping) hit();
+              else burst(laneX(ob.lane, 1), 492, "#2ee6a8", 6);
             } else {
-              // Puddles and gusts are jumpable; a gust also shoves a grounded rider.
+              // Gusts are jumpable; a grounded rider is shoved one lane.
               if (!jumping){
-                if (ob.type === "gust"){
-                  lane = Math.max(0, Math.min(2, lane + ob.dir));
-                  msgEl.textContent = "Gust pushed you! Jump the next one.";
-                  ob.passed = true; blip(220);
-                } else { hit(ob); ob.passed = true; }
-              } else { ob.passed = true; burst(x, GROUND_Y - 4, "#00f0ff", 6); }
+                lane = Math.max(0, Math.min(2, lane + ob.dir));
+                msgEl.textContent = "Gust pushed you! Jump the next one.";
+                blip(220);
+              }
             }
           }
         }
+      }
+      var dzF = speed * 0.0036 * dt;
+      streakZ = streakZ.map(function(z){ z += dzF; return z > 1.04 ? z - 1.04 : z; });
+      rippleT -= dt;
+      if (rippleT <= 0 && ripples.length < (calm ? 7 : 14)){
+        ripples.push({fx: (Math.random() * 2 - 1) * 0.95, z: 0.3 + Math.random() * 0.68, life: 1});
+        rippleT = calm ? 13 : 6;
+      }
+      for (var rI = ripples.length - 1; rI >= 0; rI--){
+        ripples[rI].life -= dt * 0.028;
+        if (ripples[rI].life <= 0) ripples.splice(rI, 1);
       }
       for (var j = particles.length - 1; j >= 0; j--){
         var p = particles[j]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.15 * dt; p.life -= dt;
@@ -284,110 +354,350 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
       }
       renderHud();
     }
+    /* Distant lightning, purely atmospheric. */
+    if (flash > 0) flash -= dt;
+    else if (tick > nextFlash){ flash = 7; nextFlash = tick + 900 + Math.random() * 900; }
     draw();
     requestAnimationFrame(step);
   }
+  function rr(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function drawBike(x, groundY){
+    if (bikeReady){
+      /* v6 sprite bike: the photoreal machine, mirrored faintly on
+         the wet street. Rotation around the contact point is the lean. */
+      var yS = groundY - riderY;
+      var dispW = 100, dispH = dispW * (897 / 520);
+      var base = yS + 4;
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.beginPath(); ctx.ellipse(x, groundY + 6, 42 - riderY * 0.1, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.save();
+      ctx.translate(x, base); ctx.scale(1, -0.4); ctx.globalAlpha = 0.15;
+      ctx.drawImage(bikeImg, -dispW / 2, -dispH, dispW, dispH);
+      ctx.restore();
+      var leanS = Math.max(-0.05, Math.min(0.05, (laneX(lane, 1) - x) * 0.0012));
+      ctx.save();
+      ctx.translate(x, base); ctx.rotate(leanS * 2);
+      ctx.drawImage(bikeImg, -dispW / 2, -dispH, dispW, dispH);
+      ctx.restore();
+      return;
+    }
+    var y = groundY - riderY;
+    /* Ground shadow stays on the road and shrinks as the bike lifts. */
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.beginPath(); ctx.ellipse(x, groundY + 6, 52 - riderY * 0.12, 9, 0, 0, Math.PI * 2); ctx.fill();
+    /* Headlight beam, thrown up the wet road. */
+    var beam = ctx.createLinearGradient(0, y - 46, 0, y - 235);
+    beam.addColorStop(0, "rgba(220,255,235,0.13)"); beam.addColorStop(1, "rgba(220,255,235,0)");
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(x - 9, y - 46); ctx.lineTo(x + 9, y - 46);
+    ctx.lineTo(x + 44, y - 235); ctx.lineTo(x - 44, y - 235);
+    ctx.closePath(); ctx.fill();
+    var lean = Math.max(-0.05, Math.min(0.05, (laneX(lane, 1) - x) * 0.0012));
+    ctx.save(); ctx.translate(x, y); ctx.scale(1.25, 1.25); ctx.rotate(lean);
+    /* Rear tire and its reflection streak on the wet road. */
+    ctx.fillStyle = "rgba(255,70,50,0.15)";
+    ctx.beginPath(); ctx.ellipse(0, 46, 15, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0a0d0b"; rr(-14, 20, 28, 19, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(190,255,220,0.25)"; ctx.lineWidth = 1;
+    for (var tI = -1; tI <= 1; tI++){ ctx.beginPath(); ctx.moveTo(tI * 8 - 3, 36); ctx.lineTo(tI * 8 + 3, 24); ctx.stroke(); }
+    /* Tail cowl: Brava Blue, lit from above. */
+    var cowl = ctx.createLinearGradient(0, -8, 0, 22);
+    cowl.addColorStop(0, "#2f6df0"); cowl.addColorStop(0.55, "#1c4fd6"); cowl.addColorStop(1, "#0d2a75");
+    ctx.fillStyle = cowl;
+    ctx.beginPath();
+    ctx.moveTo(-16, 21); ctx.lineTo(16, 21); ctx.lineTo(10, -7); ctx.lineTo(-10, -7);
+    ctx.closePath(); ctx.fill();
+    /* Tail light with glow. */
+    ctx.save(); ctx.shadowColor = "#ff3b30"; ctx.shadowBlur = 12;
+    ctx.fillStyle = "#ff5040"; ctx.beginPath(); ctx.arc(0, 15, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    /* Seat. */
+    ctx.fillStyle = "#0c0f0d"; rr(-9, -10, 18, 9, 3); ctx.fill();
+    /* Rider legs, hips to pegs. */
+    ctx.strokeStyle = "#10161d"; ctx.lineWidth = 7; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-6, -6); ctx.lineTo(-17, 13); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -6); ctx.lineTo(17, 13); ctx.stroke();
+    /* Torso: dark jacket, jade back panel and reflective stripe. */
+    var jacket = ctx.createLinearGradient(0, -32, 0, -2);
+    jacket.addColorStop(0, "#1a2b21"); jacket.addColorStop(1, "#070d09");
+    ctx.fillStyle = jacket;
+    ctx.beginPath();
+    ctx.moveTo(-13, -3); ctx.lineTo(-11, -31); ctx.lineTo(11, -31); ctx.lineTo(13, -3);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(46,230,168,0.5)"; ctx.fillRect(-2.5, -30, 5, 24);
+    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fillRect(-11, -14, 22, 2);
+    /* Arms to the grips, then the bar and mirrors. */
+    ctx.strokeStyle = "#10161d"; ctx.lineWidth = 5.5;
+    ctx.beginPath(); ctx.moveTo(-10, -28); ctx.lineTo(-16, -38); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10, -28); ctx.lineTo(16, -38); ctx.stroke();
+    ctx.strokeStyle = "#39434a"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-17, -38); ctx.lineTo(17, -38); ctx.stroke();
+    ctx.fillStyle = "#0c0f0d";
+    ctx.beginPath(); ctx.ellipse(-19, -41, 4.5, 3, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(19, -41, 4.5, 3, 0.4, 0, Math.PI * 2); ctx.fill();
+    /* Front tire, just visible past the tank. */
+    ctx.fillStyle = "#0a0d0b"; rr(-8, -54, 16, 11, 5); ctx.fill();
+    /* Helmet, facing forward (up-screen), jade stripe and visor hint. */
+    var helm = ctx.createRadialGradient(-3, -46, 2, 0, -41, 12);
+    helm.addColorStop(0, "#33424f"); helm.addColorStop(1, "#05080a");
+    ctx.fillStyle = helm; ctx.beginPath(); ctx.arc(0, -41, 10.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(46,230,168,0.75)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, -41, 10.5, -0.5, 0.6); ctx.stroke();
+    ctx.fillStyle = "rgba(155,234,255,0.85)"; ctx.fillRect(-3.5, -53.5, 7, 3.5);
+    ctx.restore();
+  }
+  function drawObstacle(ob){
+    var p = persp(ob.z), y = roadY(ob.z);
+    var wob = ob.type === "gust" ? Math.sin(tick / 12 + ob.z * 9) * roadHalf(ob.z) * 0.1 : 0;
+    var x = laneX(ob.lane, ob.z) + wob;
+    if (ob.type === "drop"){
+      var r = 2.5 + 11 * p;
+      var halo = ctx.createRadialGradient(x, y - r * 2, 1, x, y - r * 2, r * 2.6);
+      halo.addColorStop(0, "rgba(160,255,215,0.5)"); halo.addColorStop(1, "rgba(160,255,215,0)");
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y - r * 2, r * 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(190,255,225,0.75)"; ctx.lineWidth = 1.6 + 2 * p;
+      ctx.beginPath(); ctx.moveTo(x, y - r * 4.4); ctx.lineTo(x, y - r * 1.2); ctx.stroke();
+      ctx.fillStyle = "#d9ffee"; ctx.beginPath(); ctx.arc(x, y - r * 0.6, r * 0.62, 0, Math.PI * 2); ctx.fill();
+    } else if (ob.type === "puddle"){
+      var pw = 6 + roadHalf(ob.z) * 0.36, ph = pw * 0.3;
+      var pg = ctx.createRadialGradient(x, y, 1, x, y, pw * 0.55);
+      pg.addColorStop(0, "rgba(190,238,214,0.38)"); pg.addColorStop(0.7, "rgba(38,110,88,0.32)"); pg.addColorStop(1, "rgba(8,30,22,0.08)");
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(x, y, pw * 0.55, ph * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(120,255,195,0.5)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(x, y, pw * 0.55, ph * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "rgba(255,246,224,0.35)";
+      ctx.beginPath(); ctx.ellipse(x - pw * 0.16, y - ph * 0.14, pw * 0.16, ph * 0.16, 0, 0, Math.PI * 2); ctx.fill();
+    } else {
+      /* Gust: a sheet of sideways streaks filling the lane, with an
+         arrow telling you which way it will shove a grounded rider. */
+      var gw = roadHalf(ob.z) * 0.62;
+      ctx.strokeStyle = "rgba(215,255,238,0.65)"; ctx.lineCap = "round";
+      for (var k = 0; k < 3; k++){
+        ctx.lineWidth = 1.4 + 2.2 * p;
+        var gy = y - (10 + 26 * p) + k * (6 + 9 * p);
+        ctx.beginPath();
+        ctx.moveTo(x - gw, gy);
+        ctx.quadraticCurveTo(x, gy - 5 - 5 * p, x + gw, gy);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(255,215,106,0.9)";
+      var ax = x + ob.dir * (gw + 8 + 6 * p), ay = y - (8 + 16 * p), as = 4 + 6 * p;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay - as); ctx.lineTo(ax + ob.dir * as * 1.5, ay); ctx.lineTo(ax, ay + as);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  function drawRoadSurface(){
+    var BANDS = 40, K = 3;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(200 - roadHalf(0), HY); ctx.lineTo(200 + roadHalf(0), HY);
+    ctx.lineTo(200 + roadHalf(1), H); ctx.lineTo(200 - roadHalf(1), H);
+    ctx.closePath(); ctx.clip();
+    for (var b = 0; b < BANDS; b++){
+      var zA = b / BANDS, zB = (b + 1) / BANDS;
+      var yA = roadY(zA), yB = roadY(zB);
+      if (yB - yA < 0.4) continue;
+      var vA = (1 - zA) * K + distance * 0.06 * K;
+      var vB = (1 - zB) * K + distance * 0.06 * K;
+      var sTop = ((vA % 2) + 2) % 2 * 512, sLen = Math.abs(vA - vB) * 512;
+      var dx = 200 - roadHalf(zB) * 0.995, dw = roadHalf(zB) * 1.99;
+      var drawn = 0;
+      while (drawn < sLen){
+        var sNow = (sTop + drawn) % 1024;
+        var part = Math.min(sLen - drawn, 1024 - sNow);
+        var dyA = yA + (yB - yA) * (drawn / sLen), dyB = yA + (yB - yA) * ((drawn + part) / sLen);
+        ctx.drawImage(texCanvas, 0, sNow, 512, part, dx, dyA, dw, dyB - dyA + 0.6);
+        drawn += part;
+      }
+    }
+    /* Marry the texture to the plate's light: mint wash on the left,
+       coral on the right, warm in the middle, dark into the horizon. */
+    var tint = ctx.createLinearGradient(0, 0, W, 0);
+    tint.addColorStop(0, "rgba(64,255,190,0.13)"); tint.addColorStop(0.5, "rgba(255,240,214,0.05)"); tint.addColorStop(1, "rgba(255,110,80,0.13)");
+    ctx.fillStyle = tint; ctx.fillRect(0, HY, W, H - HY);
+    var fade = ctx.createLinearGradient(0, HY, 0, HY + 130);
+    fade.addColorStop(0, "rgba(4,12,9,0.66)"); fade.addColorStop(1, "rgba(4,12,9,0)");
+    ctx.fillStyle = fade; ctx.fillRect(0, HY, W, H - HY);
+    var sheen2 = ctx.createLinearGradient(0, HY, 0, H);
+    sheen2.addColorStop(0, "rgba(200,255,230,0)"); sheen2.addColorStop(1, "rgba(200,255,230,0.05)");
+    ctx.fillStyle = sheen2; ctx.fillRect(0, HY, W, H - HY);
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 3;
+    [-1, 1].forEach(function(side){
+      ctx.beginPath();
+      for (var s2 = 0; s2 <= 20; s2++){
+        var zz = s2 / 20, px = 200 + side * roadHalf(zz) * 0.995, py = roadY(zz);
+        if (s2 === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+  }
+  function drawFlowCues(){
+    ctx.save(); ctx.lineCap = "round";
+    [-0.32, 0.32].forEach(function(off){
+      streakZ.forEach(function(z){
+        var p = persp(z), y0 = roadY(z), y1 = roadY(Math.min(1, z + 0.085));
+        var x = 200 + off * roadHalf(z);
+        ctx.strokeStyle = "rgba(255,238,205," + ((calm ? 0.10 : 0.17) * (0.35 + p)).toFixed(3) + ")";
+        ctx.lineWidth = Math.max(1, 3.2 * p);
+        ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+      });
+    });
+    ripples.forEach(function(r){
+      var p = persp(r.z), x = 200 + r.fx * roadHalf(r.z), y = roadY(r.z);
+      var rx = (3 + (1 - r.life) * 17) * (0.3 + p);
+      ctx.strokeStyle = "rgba(190,235,215," + (0.20 * r.life * (calm ? 0.6 : 1)).toFixed(3) + ")";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.ellipse(x, y, rx, rx * 0.34, 0, 0, Math.PI * 2); ctx.stroke();
+    });
+    ctx.restore();
+  }
   function draw(){
     ctx.clearRect(0, 0, W, H);
-    // Sky rain streaks (background, no collision).
-    ctx.strokeStyle = "rgba(0,240,255,0.18)"; ctx.lineWidth = 1;
-    for (var s = 0; s < 24; s++){
-      var sx = (s * 53 + tick) % W, sy = (s * 37 + tick * 2) % H;
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 4, sy + 12); ctx.stroke();
+    /* Full-scene environment plate fills the whole canvas when it
+       has loaded; the road is drawn over its painted corridor. */
+    if (envReady){
+      var ew = envImg.naturalWidth, eh = envImg.naturalHeight;
+      var eScale = Math.max(W / ew, H / eh);
+      var edw = ew * eScale, edh = eh * eScale;
+      ctx.drawImage(envImg, (W - edw) / 2, (H - edh) / 2, edw, edh);
     }
-    // Road and lane lines.
-    ctx.fillStyle = "#0a1a26"; ctx.fillRect(0, GROUND_Y - 60, W, 120);
-    ctx.strokeStyle = "#123a4a"; ctx.setLineDash([12, 14]); ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(140, GROUND_Y - 60); ctx.lineTo(140, H);
-    ctx.moveTo(260, GROUND_Y - 60); ctx.lineTo(260, H); ctx.stroke(); ctx.setLineDash([]);
-    // Obstacles.
-    obstacles.forEach(function(ob){
-      var x = ob.type === "gust" && ob.laneX !== undefined ? ob.laneX : LANES[ob.lane];
-      if (ob.type === "drop"){
-        ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(x, ob.y - 22); ctx.lineTo(x, ob.y + 22); ctx.stroke();
-        ctx.fillStyle = "#00f0ff"; ctx.beginPath(); ctx.arc(x, ob.y + 26, 4, 0, Math.PI * 2); ctx.fill();
-      } else if (ob.type === "puddle"){
-        ctx.fillStyle = "#00a8cc"; ctx.beginPath(); ctx.ellipse(x, ob.y, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#9beaff"; ctx.beginPath(); ctx.ellipse(x - 8, ob.y - 2, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
-      } else {
-        ctx.strokeStyle = "#ff2e88"; ctx.lineWidth = 3;
-        for (var k = 0; k < 3; k++){
-          ctx.beginPath(); ctx.moveTo(x - 24, ob.y - 8 + k * 8);
-          ctx.quadraticCurveTo(x, ob.y - 14 + k * 8, x + 24, ob.y - 8 + k * 8); ctx.stroke();
-        }
-        ctx.fillStyle = "#ff2e88"; ctx.font = "12px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(ob.dir < 0 ? "◀ gust" : "gust ▶", x, ob.y - 18);
-      }
-    });
-    // Rider: travelling forward up the road, so the bike points up
-    // the screen and the head faces forward (up), not sideways.
-    // Seen from behind: rear wheel at the bottom, front wheel at the
-    // top, rider torso over the tank, helmet on top with its visor
-    // facing up, arms reaching to the bars, legs to the footpegs.
-    var rx = LANES[lane], ry = GROUND_Y - riderY;
-    if (!(invuln > 0 && Math.floor(tick / 4) % 2 === 0)){
-      // Wheels: rear at the bottom, front at the top.
-      [0, -40].forEach(function(dy){
-        ctx.fillStyle = "#0a1a26"; ctx.beginPath(); ctx.arc(rx, ry + dy, 11, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "#e8fbff"; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = "#e8fbff"; ctx.beginPath(); ctx.arc(rx, ry + dy, 3, 0, Math.PI * 2); ctx.fill();
-      });
-      // Frame, tank, and handlebar.
-      ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx, ry - 40); ctx.stroke();
-      ctx.fillStyle = "#123a4a"; ctx.beginPath(); ctx.ellipse(rx, ry - 26, 7, 13, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 2; ctx.stroke();
-      ctx.strokeStyle = "#e8fbff"; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(rx - 14, ry - 38); ctx.lineTo(rx + 14, ry - 38); ctx.stroke();
-      // Rider legs: hips to footpegs on each side.
-      ctx.strokeStyle = "#1a2e3a"; ctx.lineWidth = 6; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(rx - 4, ry - 14); ctx.lineTo(rx - 14, ry - 4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(rx + 4, ry - 14); ctx.lineTo(rx + 14, ry - 4); ctx.stroke();
-      // Rider torso: jacket-coloured, over the tank, leaning forward.
-      ctx.fillStyle = "#00f0ff";
+    /* Sky fallback, painted ONLY when the environment plate has
+       not loaded: with the plate in, the artwork IS the sky. */
+    if (!envReady){
+      var skyGrad = ctx.createLinearGradient(0, 0, 0, HY + 8);
+      skyGrad.addColorStop(0, "#04101a"); skyGrad.addColorStop(1, "#0a2e22");
+      ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, HY + 8);
+    }
+    if (!envReady && skyReady){
+      var iw = skyImg.naturalWidth, ih = skyImg.naturalHeight;
+      var scale = Math.max(W / iw, (HY + 26) / ih);
+      var dw = iw * scale, dh = ih * scale;
+      ctx.drawImage(skyImg, (W - dw) / 2, (HY + 26) - dh, dw, dh);
+    }
+    if (flash > 0){
+      ctx.fillStyle = "rgba(230,245,255," + ((calm ? 0 : 0.10) * (flash / 7)) + ")";
+      ctx.fillRect(0, 0, W, HY + 8);
+    }
+    /* Horizon glow, fallback only: the plate has its own glow. */
+    if (!envReady){
+      var hg = ctx.createRadialGradient(200, HY, 4, 200, HY, 130);
+      hg.addColorStop(0, "rgba(46,230,168,0.30)"); hg.addColorStop(1, "rgba(46,230,168,0)");
+      ctx.fillStyle = hg; ctx.fillRect(60, HY - 60, 280, 130);
+    }
+    /* Ground beside the road (fallback only; the environment
+       plate paints the city there when it is loaded). */
+    if (!envReady){ ctx.fillStyle = "#030c07"; ctx.fillRect(0, HY, W, H - HY); }
+    if (envReady){
+      /* v6/v8: ride on the plate's street. The asphalt texture flows
+         in perspective at the hazards' own speed; streaks and rain
+         ripples ride on top. Until the texture loads, cues only. */
+      if (texReady) drawRoadSurface();
+      drawFlowCues();
+    }
+    /* Soft seat shadow so the road sits IN the painted city. */
+    if (!envReady) ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(200 - roadHalf(0) - 7, HY); ctx.lineTo(200 + roadHalf(0) + 7, HY);
+    ctx.lineTo(200 + roadHalf(1) + 12, H); ctx.lineTo(200 - roadHalf(1) - 12, H);
+    ctx.closePath(); if (!envReady) ctx.fill();
+    /* Road bands (fallback surface, only while the plate is absent):
+       alternating wet asphalt shades, scrolling with distance. */
+    var BANDS = envReady ? 0 : 16, scrollFrac = (distance * (calm ? 0.22 : 0.38)) % 1;
+    for (var b = BANDS - 1; b >= 0; b--){
+      var f0 = (b + scrollFrac) / BANDS, f1 = (b + 1 + scrollFrac) / BANDS;
+      if (f0 > 1) continue;
+      var zA = Math.pow(Math.min(f0, 1), 1 / 1.75), zB = Math.pow(Math.min(f1, 1), 1 / 1.75);
+      var yA = roadY(zA), yB = roadY(zB);
+      var hA = roadHalf(zA), hB = roadHalf(zB);
+      var wb = Math.floor(distance * (calm ? 0.22 : 0.38)) + b;
+      ctx.fillStyle = calm ? ((wb % 2 === 0) ? "#0b1c13" : "#0a1a11") : ((wb % 2 === 0) ? "#0d2016" : "#08170f");
       ctx.beginPath();
-      ctx.moveTo(rx - 10, ry - 12); ctx.lineTo(rx - 8, ry - 34); ctx.lineTo(rx + 8, ry - 34); ctx.lineTo(rx + 10, ry - 12);
+      ctx.moveTo(200 - hA, yA); ctx.lineTo(200 + hA, yA);
+      ctx.lineTo(200 + hB, yB); ctx.lineTo(200 - hB, yB);
       ctx.closePath(); ctx.fill();
-      // Rider arms: shoulders to the handlebar grips.
-      ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 5; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(rx - 8, ry - 32); ctx.lineTo(rx - 14, ry - 38); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(rx + 8, ry - 32); ctx.lineTo(rx + 14, ry - 38); ctx.stroke();
-      // Helmet, facing forward (up), visor on the leading edge.
-      ctx.fillStyle = "#ff2e88"; ctx.beginPath(); ctx.arc(rx, ry - 42, 9, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#e8fbff"; ctx.fillRect(rx - 3, ry - 54, 6, 4);
+      /* Lane dividers as short dashes on alternating bands. */
+      if (wb % 2 === 0){
+        ctx.fillStyle = calm ? "rgba(150,255,205,0.2)" : "rgba(150,255,205,0.32)";
+        [-0.3, 0.3].forEach(function(off){
+          ctx.beginPath();
+          ctx.moveTo(200 + off * hA - 1, yA); ctx.lineTo(200 + off * hA + 1, yA);
+          ctx.lineTo(200 + off * hB + 1.6, yB); ctx.lineTo(200 + off * hB - 1.6, yB);
+          ctx.closePath(); ctx.fill();
+        });
+      }
     }
+    /* Jade edge lines along both shoulders (fallback surface only). */
+    if (!envReady) [-1, 1].forEach(function(side){
+      ctx.strokeStyle = "rgba(46,230,168,0.5)"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (var s2 = 0; s2 <= 20; s2++){
+        var zz = s2 / 20, px = 200 + side * roadHalf(zz), py = roadY(zz);
+        if (s2 === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+    /* Wet sheen sweeping the lower road (fallback surface only). */
+    var sheen = ctx.createLinearGradient(0, HY, 0, H);
+    sheen.addColorStop(0, "rgba(120,255,195,0)"); sheen.addColorStop(1, "rgba(120,255,195,0.07)");
+    ctx.fillStyle = sheen;
+    ctx.beginPath();
+    ctx.moveTo(200 - roadHalf(0), HY); ctx.lineTo(200 + roadHalf(0), HY);
+    ctx.lineTo(200 + roadHalf(1), H); ctx.lineTo(200 - roadHalf(1), H);
+    ctx.closePath(); if (!envReady) ctx.fill();
+    /* Obstacles, far ones first so near ones paint over them. */
+    obstacles.slice().sort(function(a, c){ return a.z - c.z; }).forEach(drawObstacle);
+    /* Rider (blinked out on alternating ticks while invulnerable). */
+    if (!(invuln > 0 && Math.floor(tick / 4) % 2 === 0)) drawBike(riderX, 470);
     if (splash > 0){
-      ctx.fillStyle = "rgba(0,240,255,0.15)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(120,255,200,0.13)"; ctx.fillRect(0, 0, W, H);
     }
     particles.forEach(function(p){
-      ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4);
+      ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3.4, 3.4);
     });
+    /* Rain, in front of everything: fast slanted streaks. */
+    ctx.strokeStyle = calm ? "rgba(190,255,225,0.13)" : "rgba(190,255,225,0.2)"; ctx.lineWidth = 1;
+    var rainN = reduced ? 10 : (calm ? 12 : 22);
+    var rainSpd = calm ? 4 : 7;
+    for (var s = 0; s < rainN; s++){
+      var sx = (s * 61 + tick * 2) % (W + 30) - 15, sy = (s * 43 + tick * rainSpd) % H;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 2.5, sy + 11); ctx.stroke();
+    }
+    ctx.textAlign = "center";
     if (state === "ready"){
-      ctx.fillStyle = "rgba(4,7,13,0.7)"; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#e8fbff"; ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(3,10,6,0.72)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#eafff5"; ctx.font = "bold 20px sans-serif";
       ctx.fillText("Ready when you are.", W/2, H/2 - 34);
-      ctx.font = "14px sans-serif"; ctx.fillStyle = "#9beaff";
+      ctx.font = "14px sans-serif"; ctx.fillStyle = "#8fd8bb";
       ctx.fillText("Wet road, low sky. Stay dry out there.", W/2, H/2 - 8);
       ctx.fillText("Drops: change lane. Puddles and gusts: jump.", W/2, H/2 + 18);
     } else if (state === "paused"){
-      ctx.fillStyle = "rgba(4,7,13,0.7)"; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#e8fbff"; ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(3,10,6,0.72)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#eafff5"; ctx.font = "bold 20px sans-serif";
       ctx.fillText("Paused", W/2, H/2 - 10);
-      ctx.font = "14px sans-serif"; ctx.fillStyle = "#9beaff";
+      ctx.font = "14px sans-serif"; ctx.fillStyle = "#8fd8bb";
       ctx.fillText("Tap the road to resume.", W/2, H/2 + 16);
     } else if (state === "over"){
-      ctx.fillStyle = "rgba(4,7,13,0.75)"; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#ff2e88"; ctx.font = "bold 24px sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(3,10,6,0.78)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#ff2e88"; ctx.font = "bold 24px sans-serif";
       ctx.fillText("SOAKED", W/2, H/2 - 40);
-      ctx.fillStyle = "#e8fbff"; ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = "#eafff5"; ctx.font = "bold 18px sans-serif";
       ctx.fillText(Math.floor(distance) + "m", W/2, H/2 - 10);
-      ctx.font = "14px sans-serif"; ctx.fillStyle = "#9beaff";
+      ctx.font = "14px sans-serif"; ctx.fillStyle = "#8fd8bb";
       ctx.fillText("Best: " + best + "m", W/2, H/2 + 14);
       ctx.fillText("Caught by the rain. Shake it off, ride again.", W/2, H/2 + 38);
     }
   }
-  // Controls: one-thumb swipe/tap + keys + buttons.
+  // Controls: one-thumb swipe/tap + keys + buttons (unchanged).
   var touchX = null, touchY = null, touchMoved = false;
   canvas.addEventListener("touchstart", function(e){
     var t = e.touches[0]; touchX = t.clientX; touchY = t.clientY; touchMoved = false;
@@ -434,6 +744,11 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
     soundBtn.textContent = soundOn ? "Sound: On" : "Sound: Off";
   });
   soundBtn.textContent = soundOn ? "Sound: On" : "Sound: Off";
+  calmBtn.addEventListener("click", function(){
+    calm = !calm; save("rd-calm", calm);
+    calmBtn.textContent = calm ? "Motion: Calm" : "Motion: Full";
+  });
+  calmBtn.textContent = calm ? "Motion: Calm" : "Motion: Full";
   reset(); renderHud(); requestAnimationFrame(step);
 })();
 </script>
