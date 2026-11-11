@@ -112,6 +112,17 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   var bikeImg = new Image(), bikeReady = false;
   bikeImg.onload = function(){ bikeReady = true; };
   bikeImg.src = "bike-sprite.webp";
+  /* Shoulder pass (player feedback, Nov 10, 2026): the sprite in two
+     pieces — bike + rider's lower half, and the rider's torso/helmet —
+     so the shoulders can lag and settle against the bike's lean
+     instead of riding it like a statue. Feathered split at the waist. */
+  var bikeBaseImg = new Image(), baseReady = false;
+  bikeBaseImg.onload = function(){ baseReady = true; };
+  bikeBaseImg.src = "bike-base.webp";
+  var riderTopImg = new Image(), topReady = false;
+  riderTopImg.onload = function(){ topReady = true; };
+  riderTopImg.src = "rider-top.webp";
+  var shoulderA = 0, shoulderV = 0;
   /* Wet asphalt texture (v8): the road surface itself, perspective-
      mapped onto the plate's street and scrolled at exactly the
      obstacles' approach speed, so the ground moves under the rider.
@@ -385,7 +396,20 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
       var leanS = Math.max(-0.05, Math.min(0.05, (laneX(lane, 1) - x) * 0.0012));
       ctx.save();
       ctx.translate(x, base); ctx.rotate(leanS * 2);
-      ctx.drawImage(bikeImg, -dispW / 2, -dispH, dispW, dispH);
+      if (baseReady && topReady){
+        ctx.drawImage(bikeBaseImg, -dispW / 2, -dispH, dispW, dispH);
+        /* Shoulders: an underdamped spring chasing the lean — they
+           arrive a beat late and settle, like a body shifting weight.
+           Pivot at the rider's hips (sprite 260,445). Calm halves it. */
+        var sTarget = leanS * 2 * 0.6 * (calm ? 0.5 : 1);
+        shoulderV += (sTarget - shoulderA) * 0.020 - shoulderV * 0.16;
+        shoulderA += shoulderV;
+        var sAng = shoulderA + Math.sin(tick * 0.045) * 0.004;
+        ctx.translate(0, -86.9); ctx.rotate(sAng); ctx.translate(0, 86.9);
+        ctx.drawImage(riderTopImg, -dispW / 2, -dispH, dispW, dispH);
+      } else {
+        ctx.drawImage(bikeImg, -dispW / 2, -dispH, dispW, dispH);
+      }
       ctx.restore();
       return;
     }
